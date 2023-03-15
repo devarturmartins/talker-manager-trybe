@@ -1,17 +1,23 @@
-function validateToken (req, res, next) {
+const tokenn = require('crypto');
+
+function generationToken() {
+    return tokenn.randomBytes(8).toString('hex');
+}
+
+function validateToken(req, res, next) {
     const { authorization: token } = req.headers;
-    if(!token) {
+    if (!token) {
         return res.status(401).json({
-            message: "Token não encontrado"
+            message: 'Token não encontrado',
         });
     }
 
-    if(token.length !== 16) {
+    if (token.length !== 16) {
         return res.status(401).json({
-            message: "Token inválido"
+            message: 'Token inválido',
         });
     }
     return next();
 }
 
-module.exports = { validateToken };
+module.exports = { validateToken, generationToken };

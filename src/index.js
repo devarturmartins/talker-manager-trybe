@@ -3,12 +3,18 @@ const express = require('express');
 const app = express();
 app.use(express.json());
 
-const { getTalkers, writeTalkers } = require('./utils/fs/fs.js');
+const { getTalkers, writeTalkers } = require('./utils/fs/fs');
 const { validateId } = require('./utils/middleware/validateId');
 const { validateEmail, validatePassword } = require('./utils/middleware/validateLogin');
-const { validateToken } = require('./utils/middleware/validateToken');
-const { validateName, validateAge, validateTalk, validateWatchedAt, validateRate } = require('./utils/middleware/validateTalker');
-
+const { validateToken, generationToken } = require('./utils/middleware/validateToken');
+const {
+  validateName,
+  validateAge,
+  validateTalk,
+  validateWatchedAt,
+  validateRate,
+  validateRateInexistente,
+} = require('./utils/middleware/validateTalker');
 
 const HTTP_OK_STATUS = 200;
 const PORT = process.env.PORT || '3001';
@@ -22,12 +28,11 @@ app.listen(PORT, () => {
   console.log('Online');
 });
 
-
 app.get('/talker/search', validateToken, async (req, res) => {
   const { q } = req.query;
   const talkers = await getTalkers();
 
-  if(q) {
+  if (q) {
     const talkerFiltered = talkers.filter((e) => e.name.includes(q));
     return res.status(200).json(talkerFiltered);
   }
@@ -37,7 +42,7 @@ app.get('/talker/search', validateToken, async (req, res) => {
 
 app.get('/talker', async (_req, res) => {
   const talkers = await getTalkers();
-  if(talkers.length === 0) {
+  if (talkers.length === 0) {
     return res.status(200).json([]);
   }
   return res.status(200).json(talkers);
@@ -51,11 +56,19 @@ app.get('/talker/:id', validateId, async (req, res) => {
 });
 
 app.post('/login', validateEmail, validatePassword, (req, res) => {
-  const token = require('crypto').randomBytes(8).toString('hex');
+  const token = generationToken();
   res.status(200).json({ token });
 });
 
-app.post('/talker', validateToken, validateName, validateAge, validateTalk, validateWatchedAt, validateRate, async (req, res) => {
+app.post('/talker',
+  validateToken,
+  validateName,
+  validateAge,
+  validateTalk,
+  validateWatchedAt,
+  validateRateInexistente,
+  validateRate,
+  async (req, res) => {
     const { name, age, talk: { watchedAt, rate } } = req.body;
     const talkers = await getTalkers();
     const newIdTalker = talkers.length + 1;
@@ -67,22 +80,30 @@ app.post('/talker', validateToken, validateName, validateAge, validateTalk, vali
       talk: {
         watchedAt,
         rate,
-      }
+      },
     };
   
     await writeTalkers([...talkers, newTalker]);
     res.status(201).json(newTalker);
 });
 
-app.put('/talker/:id', validateToken, validateName, validateAge, validateTalk, validateWatchedAt, validateRate, async (req, res) => {
+app.put('/talker/:id',
+  validateToken,
+  validateName,
+  validateAge,
+  validateTalk,
+  validateWatchedAt,
+  validateRateInexistente,
+  validateRate,
+  async (req, res) => {
   const { id } = req.params;
   const { name, age, talk: { watchedAt, rate } } = req.body;
   const talkers = await getTalkers();
 
   const indexTalker = talkers.findIndex((e) => +e.id === +id);
-  if(indexTalker === -1) {
+  if (indexTalker === -1) {
     return res.status(404).json({
-      message: "Pessoa palestrante não encontrada"
+      message: 'Pessoa palestrante não encontrada',
     });
   }
   
@@ -92,7 +113,7 @@ app.put('/talker/:id', validateToken, validateName, validateAge, validateTalk, v
 
   await writeTalkers(talkers);
   return res.status(200).json(aux);
-})
+});
 
 app.delete('/talker/:id', validateToken, async (req, res) => {
   const { id } = req.params;
@@ -102,4 +123,3 @@ app.delete('/talker/:id', validateToken, async (req, res) => {
   await writeTalkers(talkerFiltered);
   return res.sendStatus(204);
 });
-
