@@ -23,6 +23,18 @@ app.listen(PORT, () => {
 });
 
 
+app.get('/talker/search', validateToken, async (req, res) => {
+  const { q } = req.query;
+  const talkers = await getTalkers();
+
+  if(q) {
+    const talkerFiltered = talkers.filter((e) => e.name.includes(q));
+    return res.status(200).json(talkerFiltered);
+  }
+
+  return res.status(200).json(talkers);
+});
+
 app.get('/talker', async (_req, res) => {
   const talkers = await getTalkers();
   if(talkers.length === 0) {
@@ -90,3 +102,4 @@ app.delete('/talker/:id', validateToken, async (req, res) => {
   await writeTalkers(talkerFiltered);
   return res.sendStatus(204);
 });
+
