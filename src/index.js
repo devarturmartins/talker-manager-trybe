@@ -62,3 +62,31 @@ app.post('/talker', validateToken, validateName, validateAge, validateTalk, vali
     res.status(201).json(newTalker);
 });
 
+app.put('/talker/:id', validateToken, validateName, validateAge, validateTalk, validateWatchedAt, validateRate, async (req, res) => {
+  const { id } = req.params;
+  const { name, age, talk: { watchedAt, rate } } = req.body;
+  const talkers = await getTalkers();
+
+  const indexTalker = talkers.findIndex((e) => +e.id === +id);
+  if(indexTalker === -1) {
+    return res.status(404).json({
+      message: "Pessoa palestrante não encontrada"
+    });
+  }
+  
+  talkers[indexTalker] = { ...talkers[indexTalker], name, age, talk: { watchedAt, rate } };
+
+  const aux = talkers[indexTalker];
+
+  await writeTalkers(talkers);
+  return res.status(200).json(aux);
+})
+
+app.delete('/talker/:id', validateToken, async (req, res) => {
+  const { id } = req.params;
+  const talkers = await getTalkers();
+
+  const talkerFiltered = talkers.filter((e) => +e.id !== +id);
+  await writeTalkers(talkerFiltered);
+  return res.sendStatus(204);
+});
