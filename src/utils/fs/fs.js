@@ -12,6 +12,16 @@ async function getTalkers() {
   }
 }
 
+async function writeTalkers(talker) {
+  const talkerJSON = path.resolve(__dirname, '../../talker.json');
+  try {
+    await fs.writeFile(talkerJSON, JSON.stringify(talker));
+  } catch (err) {
+    console.error(`Erro ao ler o arquivo: ${err.message}`);
+  }
+}
+
 module.exports = {
-  getTalkers
+  getTalkers,
+  writeTalkers,
 };
