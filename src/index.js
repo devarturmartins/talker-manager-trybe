@@ -30,27 +30,27 @@ app.listen(PORT, () => {
   console.log('Online');
 });
 
-app.get('/talker/search', validateToken, validateRateQueryInexistente, validateRateQuery, async (req, res) => {
+app.get('/talker/search',
+  validateToken,
+  validateRateQueryInexistente,
+  validateRateQuery,
+  async (req, res) => {
   const { q, rate } = req.query;
   const talkers = await getTalkers();
-
   if (rate && q) {
     const paramQ = talkers.filter((e) => e.name.includes(q));
     const newFilter = paramQ.filter((el) => el.talk.rate === +rate);
     return res.status(200).json(newFilter);
   }
-  
   if (rate) {
     const talkerFiltered = talkers.filter((e) => e.talk.rate === +rate);
     console.log(talkerFiltered);
     return res.status(200).json(talkerFiltered);
   }
-  
   if (q) {
     const talkerFiltered = talkers.filter((e) => e.name.includes(q));
     return res.status(200).json(talkerFiltered);
   }
-
   return res.status(200).json(talkers);
 });
 
